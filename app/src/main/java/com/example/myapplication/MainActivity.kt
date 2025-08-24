@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
                                 LocalDateTime.now().plusSeconds(secondsText.toLong()),
                                 message
                             )
-                            alarmItem?.let(scheduler::schedule)
+                            alarmItem.let(scheduler::schedule)
                             secondsText = ""
                             message = ""
                         }) {
