@@ -61,6 +61,7 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Button(onClick = {
                             alarmItem = AlarmItem(
+                                3092,
                                 LocalDateTime.now().plusSeconds(secondsText.toLong()),
                                 message
                             )

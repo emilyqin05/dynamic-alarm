@@ -26,33 +26,34 @@ public class AndroidAlarmScheduler implements AlarmScheduler {
     //@RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     @Override
     public void schedule(AlarmItem item) {
-        Log.d("AlarmScheduler", "Scheduling alarm for: " + item.getTime() + " with message: " + item.getMessage());
+        Log.d("AlarmScheduler", "Scheduling alarm ID: " + item.getId() + "for: " + item.getTime() + " with message: " + item.getMessage());
         Intent intent = new Intent(context, AlarmReceiver.class);
         intent.putExtra("ALARM_MESSAGE_EXTRA", item.getMessage());
+
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                item.getId(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
 
         alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 item.getTime().atZone(ZoneId.systemDefault()).toEpochSecond() * 1000,
-                PendingIntent.getBroadcast(
-                        context,
-                        item.hashCode(),
-                        intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-                )
+                pendingIntent
         );
     }
 
     @Override
     public void cancel(AlarmItem item) {
-        alarmManager.cancel(
-                PendingIntent.getBroadcast(
-                        context,
-                        item.hashCode(),
-                        new Intent(context, AlarmReceiver.class),
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-                )
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                item.getId(),
+                new Intent(context, AlarmReceiver.class),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        alarmManager.cancel(pendingIntent);
 
     }
 }
