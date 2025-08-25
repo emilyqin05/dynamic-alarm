@@ -23,7 +23,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // TODO: integrate this properly
-        GoogleDirections.fetchDirections()
+        GoogleDirections.fetchDirections(this)
         val scheduler = AndroidAlarmScheduler(this)
         var alarmItem: AlarmItem? = null
         Log.d("MainActivity", "onCreate called, app starting.")
