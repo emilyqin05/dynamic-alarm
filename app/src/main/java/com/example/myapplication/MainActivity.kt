@@ -1,84 +1,119 @@
 package com.example.myapplication
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-//import androidx.compose.runtime.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-//import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.ui.theme.MyApplicationTheme
+import java.time.Instant
 import java.time.LocalDateTime
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import android.util.Log
+import java.time.ZoneId
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // TODO: integrate this properly
 
-        GoogleDirections.fetchDirections(this, "walking", "1766749200", "Vancouver+International+Airport", "Coquitlam+Centre")
         val scheduler = AndroidAlarmScheduler(this)
         var alarmItem: AlarmItem? = null
-        Log.d("MainActivity", "onCreate called, app starting.")
+
         setContent {
             MyApplicationTheme {
-                var secondsText by remember {
-                    mutableStateOf("")
-                }
-                var message by remember {
-                    mutableStateOf("")
-                }
+
+                var origin by remember { mutableStateOf("") }
+                var destination by remember { mutableStateOf("") }
+                var idealArrivalTime by remember { mutableStateOf("") } // Unix timestamp as string
+                var mode by remember { mutableStateOf("") }
+                var result by remember { mutableStateOf("") }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+
                     OutlinedTextField(
-                        value = secondsText,
-                        onValueChange = { secondsText = it },
+                        value = origin,
+                        onValueChange = { origin = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = {
-                            Text(text = "Trigger alarm in seconds")
-                        }
+                        placeholder = { Text("Origin (location)") }
                     )
+
                     OutlinedTextField(
-                        value = message,
-                        onValueChange = { message = it },
+                        value = destination,
+                        onValueChange = { destination = it },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = {
-                            Text(text = "Message")
-                        }
+                        placeholder = { Text("Destination (location)") }
                     )
-                    Row(
+
+                    OutlinedTextField(
+                        value = idealArrivalTime,
+                        onValueChange = { idealArrivalTime = it },
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Button(onClick = {
-                            alarmItem = AlarmItem(
-                                3092,
-                                LocalDateTime.now().plusSeconds(secondsText.toLong()),
-                                message
+                        placeholder = { Text("Ideal Arrival Time (Unix timestamp)") }
+                    )
+
+                    OutlinedTextField(
+                        value = mode,
+                        onValueChange = { mode = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Mode (driving, walking, transit)") }
+                    )
+
+                    Button(
+                        onClick = {
+                            result = "Fetching directions..."
+                            GoogleDirections.fetchDirections(
+                                this@MainActivity,
+                                mode,
+                                idealArrivalTime,
+                                origin.replace(" ", "+"),
+                                destination.replace(" ", "+"),
+                                object : DirectionsCallback {
+                                    override fun onSuccess(durationSeconds: Int) {
+                                        try {
+                                            val arrivalEpoch = idealArrivalTime.toLong()
+                                            val alarmEpoch = arrivalEpoch - durationSeconds
+                                            val alarmDateTime = Instant.ofEpochSecond(alarmEpoch)
+                                                .atZone(ZoneId.systemDefault())
+                                                .toLocalDateTime()
+
+                                            alarmItem = AlarmItem(
+                                                3092,
+                                                alarmDateTime,
+                                                "Leave now"
+                                            )
+                                            alarmItem.let { scheduler.schedule(it) }
+
+                                            result = "Alarm scheduled for $alarmDateTime"
+                                        } catch (e: Exception) {
+                                            Log.e("MainActivity", "Error scheduling alarm", e)
+                                            result = "Failed to schedule alarm"
+                                        }
+                                    }
+
+                                    override fun onFailure(e: Exception) {
+                                        Log.e("MainActivity", "Failed to fetch directions", e)
+                                        result = "Failed to fetch directions"
+                                    }
+                                }
                             )
-                            alarmItem.let(scheduler::schedule)
-                            secondsText = ""
-                            message = ""
-                        }) {
-                            Text(text = "Schedule")
-                        }
-                        Button(onClick = {
-                            alarmItem.let(scheduler::cancel)
-                        }) {
-                            Text(text = "Cancel")
-                        }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Submit")
+                    }
+
+                    if (result.isNotEmpty()) {
+                        Text("Status: $result")
                     }
                 }
             }
