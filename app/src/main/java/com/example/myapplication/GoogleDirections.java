@@ -1,5 +1,6 @@
 package com.example.myapplication;
 
+
 import android.content.Context;
 import android.util.Log;
 
@@ -18,19 +19,17 @@ import java.net.URL;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class GoogleDirections {
-    private static final String API_KEY = "";
-    private static final String MODE = "driving";
-    private static final String ARRIVAL_TIME = "1766749200";
-    private static final String ORIGIN = "Vancouver+International+Airport";
-    private static final String DESTINATION = "Coquitlam+Centre";
 
-    public static void fetchDirections(Context context) {
+public class GoogleDirections {
+
+    private static final String API_KEY = BuildConfig.MAPS_API_KEY;
+
+    public static void fetchDirections(Context context, String mode, String arrival_time, String origin, String destination) {
         String urlString = "https://maps.googleapis.com/maps/api/directions/json?"
-                + "origin=" + ORIGIN
-                + "&destination=" + DESTINATION
-                + "&arrival_time=" + ARRIVAL_TIME
-                + "&mode=" + MODE
+                + "origin=" + origin
+                + "&destination=" + destination
+                + "&arrival_time=" + arrival_time
+                + "&mode=" + mode
                 + "&key=" + API_KEY;
 
         Data inputData = new Data.Builder()
@@ -53,7 +52,7 @@ public class GoogleDirections {
         @Override
         public Result doWork() {
             String urlString = getInputData().getString("url");
-            String response = "";
+            String response;
 
             try {
                 URL url = new URL(urlString);

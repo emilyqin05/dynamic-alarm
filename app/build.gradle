@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+def MAPS_API_KEY = project.findProperty("MAPS_API_KEY") ?: ""
+
 android {
     namespace 'com.example.myapplication'
     compileSdk 36
@@ -16,6 +18,8 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "MAPS_API_KEY", "\"${MAPS_API_KEY}\""
     }
 
     buildTypes {
@@ -33,6 +37,7 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig true
     }
 }
 
